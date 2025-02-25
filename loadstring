@@ -12,24 +12,68 @@ local Section = Tab:AddSection({
     Name = "Settings"
 })
 
+-- Aimbot variables
+local aimbotEnabled = false
+local FOV = 90
+local targetKey = Enum.KeyCode.E -- Default key
+local visualFOVEnabled = false
+
+-- Function to find the closest enemy within FOV
+local function getClosestEnemy()
+    local closestDistance = FOV
+    local closestEnemy = nil
+    for _, player in ipairs(game.Players:GetPlayers()) do
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local distance = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).magnitude
+            if distance < closestDistance then
+                closestDistance = distance
+                closestEnemy = player
+            end
+        end
+    end
+    return closestEnemy
+end
+
+-- Function to lock onto a target
+local function lockOntoTarget()
+    local target = getClosestEnemy()
+    if target then
+        -- Rotate towards the target
+        local direction = (target.Character.HumanoidRootPart.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).unit
+        game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.lookAt(game.Players.LocalPlayer.Character.HumanoidRootPart.Position, target.Character.HumanoidRootPart.Position))
+    end
+end
+
+-- Draw FOV circle on the screen
+local function drawFOVCircle()
+    if visualFOVEnabled then
+        local screenSize = workspace.CurrentCamera.ViewportSize
+        local circle = Instance.new("Frame")
+        circle.Size = UDim2.new(0, FOV * 2, 0, FOV * 2)
+        circle.Position = UDim2.new(0.5, -FOV, 0.5, -FOV)
+        circle.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+        circle.BackgroundTransparency = 0.5
+        circle.AnchorPoint = Vector2.new(0.5, 0.5)
+        circle.BorderSizePixel = 0
+        circle.Parent = game.CoreGui
+        -- Remove the circle after 0.1 seconds
+        wait(0.1)
+        circle:Destroy()
+    end
+end
+
 -- Create toggle to enable/disable aimbot
-local AimbotToggle = Tab:AddToggle({
+Tab:AddToggle({
     Name = "Enable Aimbot",
     Default = false,
     Callback = function(Value)
-        if Value then
-            -- Enable Aimbot
-            -- Your aimbot logic should go here
-            print("Aimbot Enabled")
-        else
-            -- Disable Aimbot
-            print("Aimbot Disabled")
-        end
+        aimbotEnabled = Value
+        print("Aimbot " .. (aimbotEnabled and "Enabled" or "Disabled"))
     end    
 })
 
 -- FOV slider to change the aimbot's field of view
-local FOVSlider = Tab:AddSlider({
+Tab:AddSlider({
     Name = "FOV Size",
     Min = 10,
     Max = 180,
@@ -38,34 +82,55 @@ local FOVSlider = Tab:AddSlider({
     Increment = 1,
     ValueName = "FOV",
     Callback = function(Value)
-        -- Your code to update the FOV for the aimbot
-        print("FOV Size: " .. Value)
+        FOV = Value
+        print("FOV Size: " .. FOV)
     end    
 })
 
 -- Visual circle for FOV
-local FOVCircleToggle = Tab:AddToggle({
+Tab:AddToggle({
     Name = "Show FOV Circle",
     Default = false,
     Callback = function(Value)
-        if Value then
-            -- Display the visual FOV circle
-            print("Showing FOV Circle")
-        else
-            -- Hide the visual FOV circle
-            print("Hiding FOV Circle")
-        end
+        visualFOVEnabled = Value
+        print("FOV Circle " .. (visualFOVEnabled and "Enabled" or "Disabled"))
     end    
 })
+
+-- Dropdown to select lock-on key
+Tab:AddDropdown({
+    Name = "Lock-On Key",
+    Default = "E",
+    Options = {"E", "Q", "R", "T", "F"},
+    Callback = function(Value)
+        targetKey = Enum.KeyCode[Value]
+        print("Lock-On Key: " .. Value)
+    end    
+})
+
+-- Main loop to handle aimbot logic
+game:GetService("RunService").RenderStepped:Connect(function()
+    if aimbotEnabled then
+        local userInputService = game:GetService("UserInputService")
+        
+        if userInputService:IsKeyDown(targetKey) then
+            lockOntoTarget()
+        end
+        
+        -- Draw the FOV circle if enabled
+        drawFOVCircle()
+    end
+end)
 
 -- Create a button to reset the settings
 Tab:AddButton({
     Name = "Reset Settings",
     Callback = function()
         -- Reset settings logic
-        AimbotToggle:Set(false)
-        FOVSlider:Set(90)
-        FOVCircleToggle:Set(false)
+        aimbotEnabled = false
+        FOV = 90
+        visualFOVEnabled = false
+        targetKey = Enum.KeyCode.E
         print("Settings Reset")
     end    
 })

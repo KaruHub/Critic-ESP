@@ -1,90 +1,74 @@
--- Load the Visual UI Library
-local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/VisualRoblox/Roblox/main/UI-Libraries/Visual%20UI%20Library/Source.lua'))()
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
 
--- Create the main window
-local Window = Library:CreateWindow('ESP Hub', 'Game Name', 'ESP Settings', 'rbxassetid://10618928818', false, 'VisualUIConfigs', 'Default')
+local Window = OrionLib:MakeWindow({Name = "Aimbot Window", HidePremium = false, SaveConfig = true, ConfigFolder = "AimbotConfig"})
 
--- Create a tab for ESP settings
-local Tab = Window:CreateTab('ESP Settings', true, 'rbxassetid://3926305904', Vector2.new(484, 44), Vector2.new(36, 36))
+local Tab = Window:MakeTab({
+    Name = "Aimbot",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
 
--- Create a section for ESP options
-local Section = Tab:CreateSection('ESP Options')
+local Section = Tab:AddSection({
+    Name = "Settings"
+})
 
--- Create a toggle for enabling/disabling ESP
-local EnableESPToggle = Section:CreateToggle('Enable ESP', false, Color3.fromRGB(0, 125, 255), 0.25, function(Value)
-    -- Enable or disable ESP based on the toggle state
-    if Value then
-        print("ESP Enabled")
-        -- Here, you would enable your ESP drawing functions
-    else
-        print("ESP Disabled")
-        -- Here, you would disable your ESP drawing functions
-    end
-end)
-
--- Create a checkbox for enabling/disabling tracers
-local TracersToggle = Section:CreateToggle('Enable Tracers', false, Color3.fromRGB(0, 125, 255), 0.25, function(Value)
-    if EnableESPToggle.Value then  -- Only allow enabling tracers if ESP is enabled
+-- Create toggle to enable/disable aimbot
+local AimbotToggle = Tab:AddToggle({
+    Name = "Enable Aimbot",
+    Default = false,
+    Callback = function(Value)
         if Value then
-            print("Tracers Enabled")
-            -- Here, you would enable tracers functionality
+            -- Enable Aimbot
+            -- Your aimbot logic should go here
+            print("Aimbot Enabled")
         else
-            print("Tracers Disabled")
-            -- Here, you would disable tracers functionality
+            -- Disable Aimbot
+            print("Aimbot Disabled")
         end
-    else
-        TracersToggle:SetValue(false)  -- Reset to false if ESP is not enabled
-        print("Enable ESP first to use tracers.")
-    end
-end)
+    end    
+})
 
--- Create a checkbox for enabling/disabling chams
-local ChamsToggle = Section:CreateToggle('Enable Chams', false, Color3.fromRGB(0, 125, 255), 0.25, function(Value)
-    if EnableESPToggle.Value then  -- Only allow enabling chams if ESP is enabled
+-- FOV slider to change the aimbot's field of view
+local FOVSlider = Tab:AddSlider({
+    Name = "FOV Size",
+    Min = 10,
+    Max = 180,
+    Default = 90,
+    Color = Color3.fromRGB(255,255,255),
+    Increment = 1,
+    ValueName = "FOV",
+    Callback = function(Value)
+        -- Your code to update the FOV for the aimbot
+        print("FOV Size: " .. Value)
+    end    
+})
+
+-- Visual circle for FOV
+local FOVCircleToggle = Tab:AddToggle({
+    Name = "Show FOV Circle",
+    Default = false,
+    Callback = function(Value)
         if Value then
-            print("Chams Enabled")
-            -- Here, you would enable chams functionality
+            -- Display the visual FOV circle
+            print("Showing FOV Circle")
         else
-            print("Chams Disabled")
-            -- Here, you would disable chams functionality
+            -- Hide the visual FOV circle
+            print("Hiding FOV Circle")
         end
-    else
-        ChamsToggle:SetValue(false)  -- Reset to false if ESP is not enabled
-        print("Enable ESP first to use chams.")
-    end
-end)
+    end    
+})
 
--- Create a checkbox for enabling/disabling bone/skeleton ESP
-local SkeletonToggle = Section:CreateToggle('Enable Skeleton ESP', false, Color3.fromRGB(0, 125, 255), 0.25, function(Value)
-    if EnableESPToggle.Value then  -- Only allow enabling skeleton ESP if ESP is enabled
-        if Value then
-            print("Skeleton ESP Enabled")
-            -- Here, you would enable skeleton ESP functionality
-        else
-            print("Skeleton ESP Disabled")
-            -- Here, you would disable skeleton ESP functionality
-        end
-    else
-        SkeletonToggle:SetValue(false)  -- Reset to false if ESP is not enabled
-        print("Enable ESP first to use skeleton ESP.")
-    end
-end)
+-- Create a button to reset the settings
+Tab:AddButton({
+    Name = "Reset Settings",
+    Callback = function()
+        -- Reset settings logic
+        AimbotToggle:Set(false)
+        FOVSlider:Set(90)
+        FOVCircleToggle:Set(false)
+        print("Settings Reset")
+    end    
+})
 
--- Create a button to refresh the ESP settings
-local RefreshButton = Section:CreateButton('Refresh ESP', function()
-    print("Refreshing ESP settings...")
-    -- Here, you would update the ESP drawing functions and refresh all settings.
-    -- Make sure to apply the latest settings based on the toggles' states.
-end)
-
--- Example of how you might change settings dynamically
-local Colorpicker = Section:CreateColorpicker('ESP Color', Color3.fromRGB(255, 0, 0), 0.25, function(Value)
-    print("ESP Color changed to: ", Value)
-    -- Here, you would update the ESP color with the chosen value
-end)
-
--- Save the configuration
-Library:SaveConfig('ESPConfig')
-
--- Set up a notification when settings are saved
-Library:CreateNotification('ESP Settings', 'Your ESP settings have been saved.', 5)
+-- Finish initializing the interface
+OrionLib:Init()

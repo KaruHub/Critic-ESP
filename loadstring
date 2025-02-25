@@ -60,7 +60,7 @@ local function RemoveESP(player)
     end
 end
 
--- Function to update tracers
+-- Function to update tracers (now shows tracers for all players even off-screen)
 game:GetService("RunService").RenderStepped:Connect(function()
     if not TracersEnabled then return end
     for player, tracer in pairs(Tracers) do
@@ -68,13 +68,10 @@ game:GetService("RunService").RenderStepped:Connect(function()
             local rootPart = player.Character.HumanoidRootPart
             local screenPosition, onScreen = game.Workspace.CurrentCamera:WorldToViewportPoint(rootPart.Position)
 
-            if onScreen then
-                tracer.From = Vector2.new(workspace.CurrentCamera.ViewportSize.X / 2, workspace.CurrentCamera.ViewportSize.Y) -- Bottom center of screen
-                tracer.To = Vector2.new(screenPosition.X, screenPosition.Y) -- Player position
-                tracer.Visible = true
-            else
-                tracer.Visible = false
-            end
+            -- Update tracer position even if not on-screen
+            tracer.From = Vector2.new(workspace.CurrentCamera.ViewportSize.X / 2, workspace.CurrentCamera.ViewportSize.Y) -- Bottom center of screen
+            tracer.To = Vector2.new(screenPosition.X, screenPosition.Y) -- Player position
+            tracer.Visible = true
         else
             tracer.Visible = false
         end
@@ -175,5 +172,18 @@ end)
 game.Players.PlayerRemoving:Connect(function(player)
     RemoveESP(player)
 end)
+
+-- Regularly refresh ESPs every 3 seconds
+while true do
+    if EspEnabled then
+        -- Ensure all players are added to ESP
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if not EspObjects[player] then
+                CreateESP(player)
+            end
+        end
+    end
+    task.wait(3) -- Refresh every 3 seconds
+end
 
 OrionLib:Init()

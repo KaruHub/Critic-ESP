@@ -17,6 +17,7 @@ local aimbotEnabled = false
 local FOV = 90
 local targetKey = Enum.KeyCode.E -- Default key
 local visualFOVEnabled = false
+local FOVCircle -- For visual circle instance
 
 -- Function to find the closest enemy within FOV
 local function getClosestEnemy()
@@ -47,28 +48,35 @@ end
 -- Draw FOV circle on the screen
 local function drawFOVCircle()
     if visualFOVEnabled then
-        local screenSize = workspace.CurrentCamera.ViewportSize
-        local circle = Instance.new("Frame")
-        circle.Size = UDim2.new(0, FOV * 2, 0, FOV * 2)
-        circle.Position = UDim2.new(0.5, -FOV, 0.5, -FOV)
-        circle.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-        circle.BackgroundTransparency = 0.5
-        circle.AnchorPoint = Vector2.new(0.5, 0.5)
-        circle.BorderSizePixel = 0
-        circle.Parent = game.CoreGui
-        -- Remove the circle after 0.1 seconds
-        wait(0.1)
-        circle:Destroy()
+        if not FOVCircle then
+            -- Create the visual circle for FOV
+            FOVCircle = Instance.new("Frame")
+            FOVCircle.Size = UDim2.new(0, FOV * 2, 0, FOV * 2)
+            FOVCircle.Position = UDim2.new(0.5, -FOV, 0.5, -FOV)
+            FOVCircle.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+            FOVCircle.BackgroundTransparency = 0.5
+            FOVCircle.AnchorPoint = Vector2.new(0.5, 0.5)
+            FOVCircle.BorderSizePixel = 0
+            FOVCircle.Parent = game.CoreGui
+        else
+            -- Update the size dynamically if the circle already exists
+            FOVCircle.Size = UDim2.new(0, FOV * 2, 0, FOV * 2)
+            FOVCircle.Position = UDim2.new(0.5, -FOV, 0.5, -FOV)
+        end
+    else
+        if FOVCircle then
+            FOVCircle:Destroy()
+            FOVCircle = nil
+        end
     end
 end
 
--- Create toggle to enable/disable aimbot
+-- Aimbot toggle
 Tab:AddToggle({
     Name = "Enable Aimbot",
     Default = false,
     Callback = function(Value)
         aimbotEnabled = Value
-        print("Aimbot " .. (aimbotEnabled and "Enabled" or "Disabled"))
     end    
 })
 
@@ -83,17 +91,15 @@ Tab:AddSlider({
     ValueName = "FOV",
     Callback = function(Value)
         FOV = Value
-        print("FOV Size: " .. FOV)
     end    
 })
 
--- Visual circle for FOV
+-- Visual circle toggle
 Tab:AddToggle({
     Name = "Show FOV Circle",
     Default = false,
     Callback = function(Value)
         visualFOVEnabled = Value
-        print("FOV Circle " .. (visualFOVEnabled and "Enabled" or "Disabled"))
     end    
 })
 
@@ -104,11 +110,10 @@ Tab:AddDropdown({
     Options = {"E", "Q", "R", "T", "F"},
     Callback = function(Value)
         targetKey = Enum.KeyCode[Value]
-        print("Lock-On Key: " .. Value)
     end    
 })
 
--- Main loop to handle aimbot logic
+-- Main loop for aimbot logic
 game:GetService("RunService").RenderStepped:Connect(function()
     if aimbotEnabled then
         local userInputService = game:GetService("UserInputService")
@@ -121,19 +126,6 @@ game:GetService("RunService").RenderStepped:Connect(function()
         drawFOVCircle()
     end
 end)
-
--- Create a button to reset the settings
-Tab:AddButton({
-    Name = "Reset Settings",
-    Callback = function()
-        -- Reset settings logic
-        aimbotEnabled = false
-        FOV = 90
-        visualFOVEnabled = false
-        targetKey = Enum.KeyCode.E
-        print("Settings Reset")
-    end    
-})
 
 -- Finish initializing the interface
 OrionLib:Init()

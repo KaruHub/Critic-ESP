@@ -1,132 +1,81 @@
+-- Load Orion Library
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
 
-local Window = OrionLib:MakeWindow({Name = "Aimbot Window", HidePremium = false, SaveConfig = true, ConfigFolder = "AimbotConfig"})
+-- Create a window
+local Window = OrionLib:MakeWindow({
+    Name = "Targeting System",
+    HidePremium = false,
+    SaveConfig = true,
+    ConfigFolder = "TargetingSystemConfig"
+})
 
+-- Create a tab
 local Tab = Window:MakeTab({
-    Name = "Aimbot",
+    Name = "Targeting",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
 })
 
-local Section = Tab:AddSection({
-    Name = "Settings"
-})
-
--- Aimbot variables
-local aimbotEnabled = false
-local FOV = 90
-local targetKey = Enum.KeyCode.E -- Default key for aimbot
-local visualFOVEnabled = false
-local FOVCircle = nil -- ScreenGui circle instance
-local lastTarget = nil -- To keep track of the current target
-
--- Function to find the closest enemy within FOV
-local function getClosestEnemy()
-    local closestDistance = FOV
-    local closestEnemy = nil
-    for _, player in ipairs(game.Players:GetPlayers()) do
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player ~= game.Players.LocalPlayer then
-            local distance = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).magnitude
-            if distance < closestDistance then
-                closestDistance = distance
-                closestEnemy = player
-            end
-        end
-    end
-    return closestEnemy
-end
-
--- Function to lock onto a target
-local function lockOntoTarget()
-    local target = getClosestEnemy()
-    if target then
-        -- Rotate towards the target
-        local direction = (target.Character.HumanoidRootPart.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).unit
-        game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.lookAt(game.Players.LocalPlayer.Character.HumanoidRootPart.Position, target.Character.HumanoidRootPart.Position))
-    end
-end
-
--- Draw FOV circle on the screen
-local function drawFOVCircle()
-    if visualFOVEnabled then
-        if not FOVCircle then
-            -- Create the visual circle for FOV on ScreenGui
-            FOVCircle = Instance.new("Frame")
-            FOVCircle.Size = UDim2.new(0, FOV * 2, 0, FOV * 2)
-            FOVCircle.Position = UDim2.new(0.5, -FOV, 0.5, -FOV)
-            FOVCircle.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-            FOVCircle.BackgroundTransparency = 0.5
-            FOVCircle.AnchorPoint = Vector2.new(0.5, 0.5)
-            FOVCircle.BorderSizePixel = 0
-            FOVCircle.Parent = game.Players.LocalPlayer.PlayerGui:WaitForChild("ScreenGui")
-        else
-            -- Update the size dynamically if the circle already exists
-            FOVCircle.Size = UDim2.new(0, FOV * 2, 0, FOV * 2)
-            FOVCircle.Position = UDim2.new(0.5, -FOV, 0.5, -FOV)
-        end
-    else
-        if FOVCircle then
-            FOVCircle:Destroy()
-            FOVCircle = nil
-        end
-    end
-end
-
--- Aimbot toggle
+-- Add a toggle for enabling/disabling the targeting system
+local TargetingEnabled = false
 Tab:AddToggle({
-    Name = "Enable Aimbot",
+    Name = "Enable Targeting",
     Default = false,
     Callback = function(Value)
-        aimbotEnabled = Value
-    end    
+        TargetingEnabled = Value
+    end
 })
 
--- FOV slider to change the aimbot's field of view
-Tab:AddSlider({
-    Name = "FOV Size",
-    Min = 10,
-    Max = 180,
-    Default = 90,
-    Color = Color3.fromRGB(255,255,255),
-    Increment = 1,
-    ValueName = "FOV",
-    Callback = function(Value)
-        FOV = Value
-    end    
-})
-
--- Visual circle toggle
-Tab:AddToggle({
-    Name = "Show FOV Circle",
-    Default = false,
-    Callback = function(Value)
-        visualFOVEnabled = Value
-    end    
-})
-
--- Dropdown to select lock-on key
+-- Add a dropdown to select the target
+local Target
 Tab:AddDropdown({
-    Name = "Lock-On Key",
-    Default = "E",
-    Options = {"E", "Q", "R", "T", "F"},
+    Name = "Select Target",
+    Default = "None",
+    Options = {"None", "NPC1", "NPC2", "Player1"},
     Callback = function(Value)
-        targetKey = Enum.KeyCode[Value]
-    end    
+        Target = Value
+    end
 })
 
--- Main loop for aimbot logic
-game:GetService("RunService").RenderStepped:Connect(function()
-    if aimbotEnabled then
-        local userInputService = game:GetService("UserInputService")
-        
-        if userInputService:IsKeyDown(targetKey) then
-            lockOntoTarget()
+-- Add a bind for locking onto the target
+local LockOnKey = Enum.KeyCode.E
+Tab:AddBind({
+    Name = "Lock On Key",
+    Default = LockOnKey,
+    Hold = false,
+    Callback = function()
+        if TargetingEnabled and Target ~= "None" then
+            print("Locked onto target: " .. Target)
+            -- Add your logic here to lock onto the target
         end
-        
-        -- Draw the FOV circle if enabled
-        drawFOVCircle()
     end
-end)
+})
 
--- Finish initializing the interface
+-- Add a checkbox to draw a circle around the target
+local DrawCircle = false
+Tab:AddToggle({
+    Name = "Draw Circle",
+    Default = false,
+    Callback = function(Value)
+        DrawCircle = Value
+    end
+})
+
+-- Function to draw a circle around the target (example)
+local function DrawTargetCircle(target)
+    if DrawCircle then
+        -- Example: Draw a circle around the target (pseudo-code)
+        print("Drawing circle around " .. target)
+    end
+end
+
+-- Main loop (example)
+while true do
+    if TargetingEnabled and Target ~= "None" then
+        DrawTargetCircle(Target)
+    end
+    wait(0.1)
+end
+
+-- Initialize Orion Library
 OrionLib:Init()

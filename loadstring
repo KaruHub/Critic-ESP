@@ -18,6 +18,8 @@ local EspSection = EspTab:AddSection({
 -- Table to store ESP objects
 local EspEnabled = false
 local TracersEnabled = false
+local ChamsEnabled = false
+local SkeletonEnabled = false
 local EspObjects = {}
 local Tracers = {}
 
@@ -46,6 +48,38 @@ local function CreateESP(player)
     tracer.Visible = false
 
     Tracers[player] = tracer
+
+    -- Create Chams (Visible through walls)
+    if ChamsEnabled then
+        local cham = Instance.new("MeshPart")
+        cham.Size = Vector3.new(2, 5, 2)
+        cham.Position = character.HumanoidRootPart.Position
+        cham.Material = Enum.Material.Neon
+        cham.Color = Color3.fromRGB(255, 0, 0)
+        cham.Parent = character
+    end
+
+    -- Create Bone/Skeleton ESP (if enabled)
+    if SkeletonEnabled then
+        for _, part in pairs(character:GetChildren()) do
+            if part:IsA("MeshPart") or part:IsA("Part") then
+                local boneESP = Instance.new("BillboardGui")
+                boneESP.Adornee = part
+                boneESP.Size = UDim2.new(0, 10, 0, 10)
+                boneESP.StudsOffset = Vector3.new(0, 2, 0)
+
+                local textLabel = Instance.new("TextLabel")
+                textLabel.Text = part.Name
+                textLabel.TextSize = 14
+                textLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+                textLabel.Size = UDim2.new(0, 10, 0, 10)
+                textLabel.BackgroundTransparency = 1
+                textLabel.Parent = boneESP
+
+                boneESP.Parent = part
+            end
+        end
+    end
 end
 
 -- Function to remove ESP and tracers
@@ -102,7 +136,60 @@ local function ToggleTracers(state)
     end
 end
 
--- ESP Toggle
+-- Function to toggle chams
+local function ToggleChams(state)
+    ChamsEnabled = state
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player.Character then
+            -- Remove old cham and create a new one
+            for _, part in pairs(player.Character:GetChildren()) do
+                if part:IsA("MeshPart") then
+                    part:Destroy() -- Remove previous cham
+                end
+            end
+            if ChamsEnabled then
+                CreateESP(player) -- Recreate chams if enabled
+            end
+        end
+    end
+end
+
+-- Function to toggle Skeleton ESP
+local function ToggleSkeleton(state)
+    SkeletonEnabled = state
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player.Character then
+            -- Recreate skeleton ESP if enabled
+            for _, part in pairs(player.Character:GetChildren()) do
+                if part:IsA("MeshPart") or part:IsA("Part") then
+                    local existingESP = part:FindFirstChildOfClass("BillboardGui")
+                    if existingESP then
+                        existingESP:Destroy() -- Remove previous skeleton ESP
+                    end
+                    if SkeletonEnabled then
+                        -- Create new skeleton ESP
+                        local boneESP = Instance.new("BillboardGui")
+                        boneESP.Adornee = part
+                        boneESP.Size = UDim2.new(0, 10, 0, 10)
+                        boneESP.StudsOffset = Vector3.new(0, 2, 0)
+
+                        local textLabel = Instance.new("TextLabel")
+                        textLabel.Text = part.Name
+                        textLabel.TextSize = 14
+                        textLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+                        textLabel.Size = UDim2.new(0, 10, 0, 10)
+                        textLabel.BackgroundTransparency = 1
+                        textLabel.Parent = boneESP
+
+                        boneESP.Parent = part
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Enable ESP Checkbox
 EspTab:AddToggle({
     Name = "Enable ESP",
     Default = false,
@@ -116,7 +203,31 @@ EspTab:AddToggle({
     Name = "Enable Tracers",
     Default = false,
     Callback = function(Value)
-        ToggleTracers(Value)
+        if EspEnabled then
+            ToggleTracers(Value)
+        end
+    end    
+})
+
+-- Chams Toggle
+EspTab:AddToggle({
+    Name = "Enable Chams",
+    Default = false,
+    Callback = function(Value)
+        if EspEnabled then
+            ToggleChams(Value)
+        end
+    end    
+})
+
+-- Skeleton ESP Toggle
+EspTab:AddToggle({
+    Name = "Enable Skeleton ESP",
+    Default = false,
+    Callback = function(Value)
+        if EspEnabled then
+            ToggleSkeleton(Value)
+        end
     end    
 })
 

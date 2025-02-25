@@ -1,0 +1,123 @@
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
+
+-- Create UI Window
+local Window = OrionLib:MakeWindow({Name = "Universal ESP", HidePremium = false, SaveConfig = true, ConfigFolder = "ESPConfig"})
+
+-- Create ESP Tab
+local EspTab = Window:MakeTab({
+    Name = "ESP",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+-- Create ESP Section
+local EspSection = EspTab:AddSection({
+    Name = "ESP Settings"
+})
+
+-- Table to store ESP objects
+local EspEnabled = false
+local EspObjects = {}
+
+-- Function to create ESP for a player
+local function CreateESP(player)
+    if player == game.Players.LocalPlayer then return end -- Don't ESP yourself
+
+    local character = player.Character
+    if not character then return end
+
+    -- Create ESP Box
+    local highlight = Instance.new("Highlight")
+    highlight.Parent = character
+    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+    highlight.FillTransparency = 0.5
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    highlight.OutlineTransparency = 0
+
+    EspObjects[player] = highlight
+end
+
+-- Function to remove ESP from a player
+local function RemoveESP(player)
+    if EspObjects[player] then
+        EspObjects[player]:Destroy()
+        EspObjects[player] = nil
+    end
+end
+
+-- Function to toggle ESP
+local function ToggleESP(state)
+    EspEnabled = state
+    if EspEnabled then
+        -- Add ESP to all players
+        for _, player in pairs(game.Players:GetPlayers()) do
+            CreateESP(player)
+        end
+    else
+        -- Remove ESP from all players
+        for _, player in pairs(game.Players:GetPlayers()) do
+            RemoveESP(player)
+        end
+    end
+end
+
+-- ESP Toggle
+EspTab:AddToggle({
+    Name = "Enable ESP",
+    Default = false,
+    Callback = function(Value)
+        ToggleESP(Value)
+    end    
+})
+
+-- ESP Color Picker
+EspTab:AddColorpicker({
+    Name = "ESP Color",
+    Default = Color3.fromRGB(255, 0, 0),
+    Callback = function(Value)
+        for _, esp in pairs(EspObjects) do
+            esp.FillColor = Value
+        end
+    end
+})
+
+-- ESP Transparency Slider
+EspTab:AddSlider({
+    Name = "ESP Transparency",
+    Min = 0,
+    Max = 1,
+    Default = 0.5,
+    Increment = 0.1,
+    Callback = function(Value)
+        for _, esp in pairs(EspObjects) do
+            esp.FillTransparency = Value
+        end
+    end    
+})
+
+-- ESP Outline Toggle
+EspTab:AddToggle({
+    Name = "Enable Outline",
+    Default = true,
+    Callback = function(Value)
+        for _, esp in pairs(EspObjects) do
+            esp.OutlineTransparency = Value and 0 or 1
+        end
+    end    
+})
+
+-- Auto Update ESP for New Players
+game.Players.PlayerAdded:Connect(function(player)
+    if EspEnabled then
+        player.CharacterAdded:Connect(function()
+            task.wait(1) -- Give time for character to load
+            CreateESP(player)
+        end)
+    end
+end)
+
+game.Players.PlayerRemoving:Connect(function(player)
+    RemoveESP(player)
+end)
+
+OrionLib:Init()

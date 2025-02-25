@@ -43,7 +43,7 @@ local function CreateESP(player)
     tracer.Color = Color3.fromRGB(255, 0, 0)
     tracer.Thickness = 2
     tracer.Transparency = 1
-    tracer.Visible = TracersEnabled
+    tracer.Visible = false
 
     Tracers[player] = tracer
 end
